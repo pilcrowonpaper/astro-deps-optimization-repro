@@ -1,47 +1,54 @@
-# Astro Starter Kit: Minimal
+# Astro + Oslo reproduction
 
-```sh
-npm create astro@latest -- --template minimal
+```
+pnpm i
+pnpm dev
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/minimal)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/minimal)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/minimal/devcontainer.json)
+## Context
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Oslo an ESM module that uses [`@node-rs/argon2`](https://www.npmjs.com/package/@node-rs/argon2) and [`@node-rs/bcrypt`](https://www.npmjs.com/package/@node-rs/bcrypt), both of which uses `.node` files.
 
-## 🚀 Project Structure
+## Issue
 
-Inside of your Astro project, you'll see the following folders and files:
+When you run `pnpm`, you get these errors:
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```
+✘ [ERROR] No loader is configured for ".node" files: node_modules/.pnpm/@node-rs+argon2-darwin-x64@1.7.0/node_modules/@node-rs/argon2-darwin-x64/argon2.darwin-x64.node
+
+    node_modules/.pnpm/@node-rs+argon2@1.7.0/node_modules/@node-rs/argon2/index.js:159:36:
+      159 │             nativeBinding = require('@node-rs/argon2-darwin-x64')
+          ╵                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".node" files: node_modules/.pnpm/@node-rs+bcrypt-darwin-x64@1.9.0/node_modules/@node-rs/bcrypt-darwin-x64/bcrypt.darwin-x64.node
+
+    node_modules/.pnpm/@node-rs+bcrypt@1.9.0/node_modules/@node-rs/bcrypt/binding.js:153:36:
+      153 │             nativeBinding = require('@node-rs/bcrypt-darwin-x64')
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+This can be fixed by adding updating the Vite config the exclude `oslo` from optimization, but I'm not sure why this isn't being done automatically.
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+```ts
+import { defineConfig } from "astro/config";
 
-Any static assets, like images, can be placed in the `public/` directory.
+import node from "@astrojs/node";
 
-## 🧞 Commands
+// https://astro.build/config
+export default defineConfig({
+  output: "server",
+  adapter: node({
+    mode: "standalone",
+  }),
+  vite: {
+    optimizeDeps: {
+      exclude: ["oslo"],
+    },
+  },
+});
+```
 
-All commands are run from the root of the project, from a terminal:
+It might be a Vite issue, but
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- This is not an issue when importing `oslo/password` in `.astro` files.
+- Nuxt, SolidStart, and SvelteKit doesn't seem to have the same issue (Remix seems to have the same issue tho).
+- Using `@node-rs/argon2` directly works fine.
