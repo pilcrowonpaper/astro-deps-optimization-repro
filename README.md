@@ -52,3 +52,4 @@ It might be a Vite issue, but
 - This is not an issue when importing `oslo/password` in `.astro` files.
 - Nuxt, SolidStart, and SvelteKit doesn't seem to have the same issue (Remix seems to have the same issue tho).
 - Using `@node-rs/argon2` directly works fine.
+- No errors when running `pnpm build`
