@@ -1,13 +1,11 @@
-# Astro + Oslo reproduction
+# Astro + `.node` reproduction
+
+Astro fails to start dev server when using packages with `.node` files.
 
 ```
 pnpm i
 pnpm dev
 ```
-
-## Context
-
-Oslo an ESM module that uses [`@node-rs/argon2`](https://www.npmjs.com/package/@node-rs/argon2) and [`@node-rs/bcrypt`](https://www.npmjs.com/package/@node-rs/bcrypt), both of which uses `.node` files.
 
 ## Issue
 
@@ -26,7 +24,7 @@ When you run `pnpm`, you get these errors:
       153 │             nativeBinding = require('@node-rs/bcrypt-darwin-x64')
 ```
 
-This can be fixed by adding updating the Vite config the exclude `oslo` from optimization, but I'm not sure why this isn't being done automatically.
+This can be fixed by adding updating the Vite config the exclude `@node-rs/argon2` from optimization.
 
 ```ts
 import { defineConfig } from "astro/config";
@@ -41,15 +39,8 @@ export default defineConfig({
   }),
   vite: {
     optimizeDeps: {
-      exclude: ["oslo"],
+      exclude: ["@node-rs/argon2"],
     },
   },
 });
 ```
-
-It might be a Vite issue, but
-
-- This is not an issue when importing `oslo/password` in `.astro` files.
-- Nuxt, SolidStart, and SvelteKit doesn't seem to have the same issue (Remix seems to have the same issue tho).
-- Using `@node-rs/argon2` directly works fine.
-- No errors when running `pnpm build`

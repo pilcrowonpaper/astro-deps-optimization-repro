@@ -1,6 +1,5 @@
-import { Argon2id } from "oslo/password";
+import { hash } from "@node-rs/argon2";
 
 export async function GET() {
-  const hash = await new Argon2id().hash("password");
-  return new Response(hash);
+  return new Response(await hash("password"));
 }
